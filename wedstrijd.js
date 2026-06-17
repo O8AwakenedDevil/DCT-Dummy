@@ -1,8 +1,5 @@
 "use strict";
 
-import { db } from "./firebase-config.js";
-import { collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-firestore.js";
-
 const weekDates = {
     1: "23/03 - 29/03",
     2: "30/03 - 05/04",
@@ -26,46 +23,38 @@ function formatDatumTijd(datumString) {
     return `${dag}-${maand}-${jaar}`;
 }
 
-function checkWedstrijdVerlopen(datumTijd, uur) {
-    if (!datumTijd || !uur) return "❌";
-
-    const wedstrijdDatum = new Date(`${datumTijd}T${uur}:00`);
-
-    return wedstrijdDatum.getTime() < new Date().getTime() ? "✔" : "❌";
-}
-
 async function haalWedstrijdenOp() {
     const container = document.getElementById("tablesContainer");
     container.innerHTML = "";
 
     try {
-        const querySnapshot = await getDocs(collection(db, `W${activeWeek}`));
+        const response = await fetch(`api/wedstrijden.php?week=${activeWeek}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const matches = await response.json();
 
-        if (querySnapshot.empty) {
+        if (!matches.length) {
             container.innerHTML = "<p>Geen wedstrijden gevonden.</p>";
             return;
         }
 
         const perKlasse = {};
-        querySnapshot.forEach((docSnap) => {
-            const w = docSnap.data();
-        
+        matches.forEach((w) => {
             if (!perKlasse[w.klasse]) perKlasse[w.klasse] = [];
-            perKlasse[w.klasse].push({ id: docSnap.id, ...w, status: checkWedstrijdVerlopen(w.datumTijd, w.uur)});
         });
 
         Object.keys(perKlasse).sort().forEach(klasse => {
-            let html = `<h3>${klasse}</h3><table border='1'><tr><th>Speler 1</th><th>Speler 2</th><th>Datum</th><th>Uur</th><th>Status</th></tr>`;
+            let html = `<h3>${klasse}</h3><table border='1'><tr><th>Speler 1</th><th>Speler 2</th><th>Datum</th><th>Uur</th></tr>`;
             perKlasse[klasse].forEach(w => {
                 html += `<tr>
                 <td>${w.speler1}</td><td>${w.speler2}</td>
-                <td>${formatDatumTijd(w.datumTijd)}</td><td>${w.uur}</td><td>${w.status}</td></tr>`;
+                <td>${formatDatumTijd(w.datumTijd)}</td><td>${w.uur}</td></tr>`;
             });
             html += "</table>";
             container.innerHTML += html;
         });
     } catch (error) {
         console.error("Fout bij het ophalen van wedstrijden: ", error);
+        container.innerHTML = "<p>Wedstrijden konden niet geladen worden.</p>";
     }
 }
 
@@ -75,7 +64,7 @@ function setActiveWeek(week) {
 
     for (let i = 1; i <= 9; i++) {
         const lnk = document.getElementById(`wk${i}`);
-        
+
         if (!lnk) continue;
         lnk.classList.toggle("active", i === week);
 
@@ -86,24 +75,14 @@ function setActiveWeek(week) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("dataForm").addEventListener("submit", async (e) => {
-        e.preventDefault();
-
-        try {
-            await addDoc(collection(db, `W${activeWeek}`), {
-                speler1: document.getElementById("speler1").value,
-                speler2: document.getElementById("speler2").value,
-                datumTijd: document.getElementById("datumTijd").value,
-                uur: document.getElementById("uur").value,
-                klasse: document.getElementById("klasse").value,
-            });
-            alert("Wedstrijd toegevoegd");
-            document.getElementById("dataForm").reset();
-            await haalWedstrijdenOp();
-        } catch (error) {
-            console.error("Fout bij opslaan:", error);
-        }
-    });
+    const form = document.getElementById("dataForm");
+    if (form) {
+        form.addEventListener("submit", (e) => {
+            e.preventDefault();
+            alert("Dit is een demo-site, gegevens worden niet opgeslagen.");
+            form.reset();
+        });
+    }
 
     for (let i = 1; i <= 9; i++) {
         const lnk = document.getElementById(`wk${i}`);

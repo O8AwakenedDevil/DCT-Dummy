@@ -1,8 +1,5 @@
 "use strict";
 
-import { db } from "./firebase-config.js";
-import { collection, getDocs } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-firestore.js";
-
 let beheerders = [];
 
 function renderSidebar() {
@@ -39,7 +36,6 @@ function renderProfile(index) {
                 <td><img src="${b.foto}" alt="${b.naam}" style="height: 250px; width: 190px;"></td>
             </tr>
             <tr><th><strong>Naam:</strong></th><td>${b.naam}</td></tr>
-            <tr><th><strong>Leeftijd:</strong></th><td>${b.leeftijd}</td></tr>
             <tr><th><strong>Woonplaats:</strong></th><td>${b.woonplaats}</td></tr>
             <tr><th><strong>Wanneer ben je begonnen met darten:</strong></th><td>${nl(b.begonnen)}</td></tr>
             <tr><th><strong>1ste dartpijlen:</strong></th><td>${b.eerstePijlen}</td></tr>
@@ -52,14 +48,19 @@ function renderProfile(index) {
 
 document.addEventListener("DOMContentLoaded", async () => {
     try {
-        const snapshot = await getDocs(collection(db, "beheerders"));
+        const response = await fetch("api/beheerders.php");
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-        beheerders = snapshot.docs.map(doc => doc.data()).sort((a, b) => a.volgorde - b.volgorde);
+        beheerders = await response.json();
+        // Already sorted server-side by volgorde, but keep client-side sort defensively
+        beheerders.sort((a, b) => (a.volgorde ?? 0) - (b.volgorde ?? 0));
 
         renderSidebar();
 
         if (beheerders.length > 0) renderProfile(0);
     } catch (error) {
         console.error("Fout bij ophalen beheerders:", error);
+        const container = document.getElementById("profileContainer");
+        if (container) container.innerHTML = "<p>Beheerders konden niet geladen worden.</p>";
     }
-})
+});
