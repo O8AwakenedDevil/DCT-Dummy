@@ -40,6 +40,7 @@ async function haalWedstrijdenOp() {
         const perKlasse = {};
         matches.forEach((w) => {
             if (!perKlasse[w.klasse]) perKlasse[w.klasse] = [];
+            perKlasse[w.klasse].push(w);
         });
 
         Object.keys(perKlasse).sort().forEach(klasse => {

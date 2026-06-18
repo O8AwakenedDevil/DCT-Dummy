@@ -33,7 +33,7 @@ function renderProfile(index) {
         <table>
             <tr>
                 <th><strong>Meet the Team</strong></th>
-                <td><img src="${b.foto}" alt="${b.naam}" style="height: 250px; width: 190px;"></td>
+                <td><img src="${b.foto}" alt="${b.naam}" style="height: auto; width: 190px;"></td>
             </tr>
             <tr><th><strong>Naam:</strong></th><td>${b.naam}</td></tr>
             <tr><th><strong>Woonplaats:</strong></th><td>${b.woonplaats}</td></tr>
